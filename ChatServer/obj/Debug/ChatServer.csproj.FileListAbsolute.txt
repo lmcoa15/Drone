@@ -1,0 +1,11 @@
+C:\Users\jooyon\Desktop\ChatApp\ChatServer\bin\Debug\ChatServer.exe
+C:\Users\jooyon\Desktop\ChatApp\ChatServer\bin\Debug\ChatServer.pdb
+C:\Users\jooyon\Desktop\ChatApp\ChatServer\obj\Debug\ChatServer.csprojResolveAssemblyReference.cache
+C:\Users\jooyon\Desktop\ChatApp\ChatServer\obj\Debug\ChatServer.exe
+C:\Users\jooyon\Desktop\ChatApp\ChatServer\obj\Debug\ChatServer.pdb
+G:\ChatApp\ChatServer\obj\Debug\ChatServer.exe
+G:\ChatApp\ChatServer\obj\Debug\ChatServer.pdb
+C:\Users\동진\Desktop\드론\ChatApp\ChatServer\obj\Debug\ChatServer.exe
+C:\Users\동진\Desktop\드론\ChatApp\ChatServer\obj\Debug\ChatServer.pdb
+C:\Users\jooyon\Desktop\Treasure\드론\ChatApp\ChatServer\obj\Debug\ChatServer.exe
+C:\Users\jooyon\Desktop\Treasure\드론\ChatApp\ChatServer\obj\Debug\ChatServer.pdb

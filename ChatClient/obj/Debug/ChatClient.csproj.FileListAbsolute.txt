@@ -1,0 +1,10 @@
+C:\Users\jooyon\Desktop\ChatApp\ChatClient\bin\Debug\ChatClient.exe
+C:\Users\jooyon\Desktop\ChatApp\ChatClient\bin\Debug\ChatClient.pdb
+C:\Users\jooyon\Desktop\ChatApp\ChatClient\obj\Debug\ChatClient.csprojResolveAssemblyReference.cache
+C:\Users\jooyon\Desktop\ChatApp\ChatClient\obj\Debug\ChatClient.exe
+C:\Users\jooyon\Desktop\ChatApp\ChatClient\obj\Debug\ChatClient.pdb
+C:\Users\동진\Desktop\드론\ChatApp\ChatClient\obj\Debug\ChatClient.exe
+C:\Users\동진\Desktop\드론\ChatApp\ChatClient\obj\Debug\ChatClient.pdb
+C:\Users\동진\Desktop\드론\ChatApp\ChatClient\bin\Debug\ChatClient.exe
+C:\Users\동진\Desktop\드론\ChatApp\ChatClient\bin\Debug\ChatClient.pdb
+C:\Users\동진\Desktop\드론\ChatApp\ChatClient\obj\Debug\ChatClient.csprojResolveAssemblyReference.cache

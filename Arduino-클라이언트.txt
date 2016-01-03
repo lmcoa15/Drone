@@ -1,0 +1,202 @@
+
+
+
+#include <SPI.h>
+#include <WiFi.h>
+
+char ssid[] = "AndroidHotspot7067"; //  your network SSID (name)
+char pass[] = "wjqthr12";    // your network password (use for WPA, or use as key for WEP)
+int keyIndex = 0;            // your network key Index number (needed only for WEP)
+
+int status = WL_IDLE_STATUS;
+// if you don't want to use DNS (and reduce your sketch size)
+// use the numeric IP instead of the name for the server:
+IPAddress server(192,168,43,123);  // numeric IP for Google (no DNS)
+
+// Initialize the Ethernet client library
+// with the IP address and port of the server
+// that you want to connect to (port 80 is default for HTTP):
+WiFiClient client;
+
+int anaPin1 = A0;
+int anaPin2 = A1;
+int anaPin3 = A2;
+int anaPin4 = A3;
+int anaPin5 = A4;
+
+void setup() {
+  //Initialize serial and wait for port to open:
+  Serial.begin(9600);
+  
+  pinMode(anaPin1,INPUT);
+  pinMode(anaPin2,INPUT);
+  pinMode(anaPin3,INPUT);
+  pinMode(anaPin4,INPUT);
+  pinMode(anaPin5,INPUT);
+
+  // check for the presence of the shield:
+  if (WiFi.status() == WL_NO_SHIELD) {
+    Serial.println("WiFi shield not present");
+    // don't continue:
+    while (true);
+  }
+
+  String fv = WiFi.firmwareVersion();
+  if ( fv != "1.1.0" )
+    Serial.println("Please upgrade the firmware");
+
+  // attempt to connect to Wifi network:
+  while (status != WL_CONNECTED) {
+    Serial.print("Attempting to connect to SSID: ");
+    Serial.println(ssid);
+    // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
+    status = WiFi.begin(ssid, pass);
+
+    delay(10000);
+  }
+  Serial.println("Connected to wifi");
+  printWifiStatus();
+
+  Serial.println("\nStarting connection to server...");
+  // if you get a connection, report back via serial:
+  if (client.connect(server,23)) {
+    Serial.println("connected to server");
+    client.println();
+  }
+}
+
+
+int arduId = 1;
+boolean stackData = false;
+unsigned char result[11]={0};
+int cnt = 2;
+int count=0;
+
+unsigned char distance1 =0;
+unsigned char distance2 =0;
+unsigned char distance3 =0;
+unsigned char distance4 =0;
+unsigned char distance5 =0;
+
+void loop() {
+  // if there are incoming bytes available
+  // from the server, read them and print them:
+   while(count != 1){    
+      distance1 = analogRead(anaPin1);
+      distance2 = analogRead(anaPin2);
+      distance3 = analogRead(anaPin3);
+      distance4 = analogRead(anaPin4);
+      distance5 = analogRead(anaPin5);
+      
+      distance1=(distance1/10)*10;
+      distance2=(distance2/10)*10;
+      distance3=(distance3/10)*10;
+      distance4=(distance4/10)*10;
+      distance5=(distance5/10)*10;
+     
+      result[0] = '<';
+      result[1] = arduId;
+      result[5] = distance1;
+      result[6] = distance2;
+      result[7] = distance3;
+      result[8] = distance4;
+      result[9] = distance5;
+      result[10] = '>';
+
+      for(int i = 0; i<11 ; i++){
+        Serial.print(result[i]);
+        Serial.print(" ");
+        client.write(result[i]);
+        //server.write(" ");
+        delay(10);
+      }
+      
+      Serial.println();
+      count++;
+     }
+   
+    
+   
+    if (count == 1 && client.available() > 0) {
+      // read the bytes incoming from the client:
+       if(stackData){
+        char stackChar = client.read();
+        result[cnt] = stackChar;
+        ++cnt;
+        if(cnt == 5){
+          stackData = false;
+        }
+      }
+      
+      else{
+        char thisChar = client.read();
+        if(thisChar == '>' && cnt == 5){
+          count =0;
+          cnt = 2;
+        }
+        
+        else if(thisChar =='<'){
+          thisChar = client.read();
+          if(thisChar == '2'){
+            stackData=true;
+          }
+        }
+        else{
+          for(int i=2; i<5; i++){
+            result[i] = 255;
+          }
+          count = 0;
+          stackData = false;
+        }
+      }
+     /*else if(thisChar =='>'){
+        count = 0;
+        stackData=false;
+      }*/
+        
+      /*if(stackData){
+        for(int i=2; i<6; i++){
+         unsigned char stackChar = client.read();
+         if(i == 5 && stackChar == '>'){
+           stackData = false;
+           count = 0;
+           break;
+         }
+         else{
+           stackData = false;
+         }
+         result[i] = stackChar;
+      }
+    }*/
+  }
+  
+   if (!client.connected()) {
+    Serial.println();
+    Serial.println("disconnecting from server.");
+    client.stop();
+
+    // do nothing forevermore:
+    while (true);
+  }
+}
+
+
+void printWifiStatus() {
+  // print the SSID of the network you're attached to:
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
+
+  // print your WiFi shield's IP address:
+  IPAddress ip = WiFi.localIP();
+  Serial.print("IP Address: ");
+  Serial.println(ip);
+
+  // print the received signal strength:
+  long rssi = WiFi.RSSI();
+  Serial.print("signal strength (RSSI):");
+  Serial.print(rssi);
+  Serial.println(" dBm");
+}
+
+
+
