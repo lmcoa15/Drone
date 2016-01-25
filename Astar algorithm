@@ -1,0 +1,274 @@
+#include <iostream>
+#include <stdio.h>
+#include <math.h>
+#define X 5
+#define Y 5
+using namespace std;
+
+struct cordinate
+{
+    int x;
+    int y;
+};
+
+struct Drone_star
+{
+    Drone_star* FGH;	//부모의F,G,H
+    cordinate Pt;		//현재좌표
+    
+    float F;			//F=G+H
+    float G;			//시작점부터 이동지점까지의 거리
+    float H;			//이동 지점으로부터 목표점까지의 거리
+    bool Block;			//벽인지여부를판단
+};
+
+//5 X 5 size
+ int Map[X * Y] =  {0,1,1,1,0,
+                    0,1,1,1,0,
+                    0,1,1,1,0,
+                    0,1,1,1,0,
+                    0,1,1,1,0 };
+
+Drone_star OpenList [X * Y];			//열린목록을저장하는배열
+Drone_star CloseList[X * Y];			//닫힌목록을저장하는배열
+Drone_star Road[X * Y];				//
+
+void A_algorithm(); //main에서 알고리즘 호출하여 시작
+void Coordinate_input(Drone_star*, Drone_star*); //시작할 때 값을 입력한다.
+bool Block_Search(Drone_star*, Drone_star*, Drone_star); //주위의 열린목록을 찾는다
+void FGH(Drone_star, Drone_star, Drone_star*); //비용을 계산한다.
+void Sortlib(Drone_star);
+int Open_count = 0;    //열린목록을검사하기위한카운트
+int Close_count = 0;	  //닫힌목록을검사하기위한카운트
+Drone_star Search[X * Y];
+
+int main()
+{
+    A_algorithm();
+    
+    return 0;
+}
+
+void A_algorithm(){
+    Drone_star Start, End;			//시작점과끝점을받아줄변수
+    Drone_star Dir8[8];				//나를기준으로8방향에있는픽셀들의정보
+    bool Result;				//검색한좌표가목표점인지를확인하기위한변수
+    int Search_count=0;
+    
+    Coordinate_input(&Start, &End); //시작값과 목적지를 넘겨줘서 함수안에서 설정
+    
+    Start.FGH = NULL;			//처음 시작할 때 부모가 없기 때문에 NULL로 표시
+    Start.Block = false;			//Block이 true일 때 검사하지 않는다.
+    
+    
+    //시작사각형을열린목록에넣고,그부모의정보는Null로해준다( 정보x )
+    OpenList[Open_count] = Start;
+    Open_count++;    //열린목록의카운트는++ 해준다.
+    
+    Search[Search_count] = OpenList[0];			//최단거리를찾으면 마지막에 이동경로를 저장한 후 호출한다.
+    Block_Search(&Search[Search_count], Dir8, End);	//현재픽셀의좌표, 주위픽셀, 목표지점의좌표를넘겨준다.
+    FGH(Start, End, Dir8);		//FGH를 계산
+    
+    Search_count++; //값을 증가시켜줌으로써 Search의 다음 열리목록을 검색한다.
+    CloseList[Close_count] = Search[Search_count-1];
+    Open_count--;
+    Close_count++;
+    
+    //Block이 true가아니면 주위픽셀들을 오픈목록에저장한다.
+    for(int i=0; i<8 ; i++)
+    {
+        if(Dir8[i].Block == false)
+        {
+            OpenList[Open_count] = Dir8[i];
+            Open_count++;
+        }
+    }
+    
+    //F값을 정렬 ( 가장작은F를 마지막에 검색한다.)
+    Drone_star temp;
+    for (int i=0; i<Open_count; i++)
+    {
+        
+        for (int j=i; j < Open_count; j++)
+        {
+            if(OpenList[i].F < OpenList[j].F){
+                temp = OpenList[j];
+                OpenList[j] = OpenList[i];
+                OpenList[i] = temp;
+            }
+        }
+    }
+    
+    while(true)
+    {
+        Search[Search_count] = OpenList[Open_count-1];
+        CloseList[Close_count] = Search[Search_count];
+        Open_count--;
+        Close_count++;
+        
+        Result = Block_Search(&Search[Search_count], Dir8, End);
+        Search_count++;
+        FGH(Start, End, Dir8);
+        
+        bool confirm;
+        for(int i=0; i<8 ; i++)
+        {
+            if(Dir8[i].Block == false)
+            {
+                confirm = false;
+                
+                for(int j=0 ; j < Open_count ; j++)
+                {
+                    //OpenList의 값과 주위에 있는 블록 정보가 일치할때
+                    if(OpenList[j].Pt.x == Dir8[i].Pt.x && OpenList[j].Pt.y == Dir8[i].Pt.y)
+                    {
+                        //	if(OpenList[j].G > Dir8[i].G) OpenList[j] = Dir8[i];
+                        if(OpenList[j].FGH->G > Dir8[i].FGH->G) OpenList[j] = Dir8[i];
+                        
+                        confirm = true;
+                        break;
+                    }
+                }
+                
+                if(confirm == false)
+                {
+                    // 일치하지 않을 때 열린 목록에 넣는다.
+                    OpenList[Open_count] = Dir8[i];
+                    Open_count++;
+                }
+            }
+        }
+        
+        Drone_star temp;
+        for (int i=0; i < Open_count; i++)
+        {
+            // 반복 연산때는 정렬된 마지막문자를 건드리지 않기위해-1
+            for (int j=i; j < Open_count ; j++)
+            {
+                if(OpenList[i].F < OpenList[j].F)
+                {
+                    temp = OpenList[j];
+                    OpenList[j] = OpenList[i];
+                    OpenList[i] = temp;
+                }
+            }
+        }
+        
+        
+        //만약검색 픽셀에 목표점이 있으면 부모노드를추적
+        if (Result == 1)
+        {
+            printf("최종 목적지 도착!\n");
+            break;
+        }
+    }
+}
+
+void Coordinate_input(Drone_star *S, Drone_star*E)
+{
+    printf(" 좌표값 입력\n ");
+    printf(" x: %d\n", X-1);
+    printf(" y: %d\n", Y-1);
+    scanf("%d %d", &((*S).Pt.x),  &((*S).Pt.y));
+    printf("도착점의좌표 x : %d, y  : %d ",X-1, Y-1);
+    scanf("%d %d", &((*E).Pt.x),  &((*E).Pt.y));
+    
+}
+
+bool ESearch(Drone_star* St, Drone_star *D, Drone_star Ed)
+{
+    //주변8픽셀에대한정보를얻기위해각좌표값을D배열에넣어준다.
+    
+    D[0].Pt.x = (*St).Pt.x+1;		//오른쪽픽셀
+    D[0].Pt.y = (*St).Pt.y;
+    
+    D[1].Pt.x = (*St).Pt.x+1;		//오른쪽밑의픽셀
+    D[1].Pt.y = (*St).Pt.y+1;
+    
+    D[2].Pt.x = (*St).Pt.x;			//아래픽셀
+    D[2].Pt.y = (*St).Pt.y+1;
+    
+    D[3].Pt.x = (*St).Pt.x-1;		//왼쪽아래픽셀
+    D[3].Pt.y = (*St).Pt.y+1;
+    
+    D[4].Pt.x = (*St).Pt.x-1;		//왼쪽픽셀
+    D[4].Pt.y = (*St).Pt.y;
+    
+    D[5].Pt.x = (*St).Pt.x-1;		//왼쪽위의픽셀
+    D[5].Pt.y = (*St).Pt.y-1;
+    
+    D[6].Pt.x = (*St).Pt.x;			//위의픽셀
+    D[6].Pt.y = (*St).Pt.y-1;
+    
+    D[7].Pt.x = (*St).Pt.x+1;		//오른쪽위의픽셀
+    D[7].Pt.y = (*St).Pt.y-1;
+    
+    
+    //주위8픽셀에부모의좌표값을입력
+    for (int i=0 ; i<8; i++)
+    {
+        D[i].FGH = St;
+        D[i].Block = false; //모두 false로 설정한다.
+    }
+    
+    //닫힘목록에있는지여부, 벽인지여부를검사하여 둘중하나라도 해당하면 Block를 True로한다.
+    for (int i=0 ; i<8 ; i++)
+    {
+        //닫힌목록에주위8개픽셀중하나라도있는지검사, 있으면그픽셀의Block값을true해준다.
+        for (int j = 0 ; j < Close_count ; j++)
+        {
+            if(CloseList[j].Pt.x == D[i].Pt.x && CloseList[j].Pt.y == D[i].Pt.y)
+                D[i].Block = true;
+        }
+        
+        //받아온맵에서벽(Block)인지 지도범위를 벗어나는지를검사
+        if( Map[D[i].Pt.y * Y + D[i].Pt.x] == 0 || (D[i].Pt.x < 0 || D[i].Pt.y < 0) || (D[i].Pt.x > X-1 || D[i].Pt.y > Y-1) )
+            D[i].Block = true;
+    }
+    
+    int t = 0;
+    Drone_star Out, Temp;
+    //조사목록과 목표점이같으면 1을리턴
+    for (int i=0 ; i<8; i++)
+    {
+        //주위8픽셀중 목적지에 도착한 픽셀이있는지 검사하여 있으면 1을반환
+        if (D[i].Pt.x == Ed.Pt.x && D[i].Pt.y == Ed.Pt.y)
+        {
+            Temp = D[i];  //목표지점에 도달한다면 마지막 픽셀의 정보를 Temp에 저장한다.
+            while(1)
+            {
+                Out = Temp;		//처음내보내질픽셀에마지막으로찾은픽셀저장
+                Road[t] = Out;		//실제외부로출력되는최종길을저장
+                Temp = *Out.FGH;        //템프를현재최적경로로설정된픽셀의부모로바꿔준다.(부모로부터역추적)
+                
+                t++;
+                if(Temp.FGH == NULL) break;
+            }
+            int y=t;
+            for(y=y ; y > 0 ; y?)
+            {
+                printf("%d %d\n",Road[y].Pt.x, Road[y].Pt.y);
+            }
+            return 1;
+        }
+    }	
+    return 0;
+}
+
+void FGH(Drone_star St, Drone_star Ed, Drone_star *D)
+{
+    for(int i=0; i<8 ; i++)
+    {
+        float Dx, Dy;
+        Dx = (float) (St.Pt.x - D[i].Pt.x);
+        Dy = (float) (St.Pt.y - D[i].Pt.y);
+        
+        D[i].G = sqrt((Dx*Dx) + (Dy*Dy));
+        
+        Dx = (float) (Ed.Pt.x - D[i].Pt.x);
+        Dy = (float) (Ed.Pt.y - D[i].Pt.y);
+        D[i].H = abs(Dx) + abs(Dy);  //이동 지점으로부터 목표점까지의 거리
+        
+        D[i].F = D[i].H + D[i].G;
+    }
+}
